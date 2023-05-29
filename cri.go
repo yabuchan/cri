@@ -45,7 +45,8 @@ const PodConfigMapFilePerms = 0644
 
 // Provider implements the virtual-kubelet provider interface and manages pods in a CRI runtime
 // NOTE: Provider is not inteded as an alternative to Kubelet, rather it's intended for testing and POC purposes
-//       As such, it is far from functionally complete and never will be. It provides the minimum function necessary
+//
+//	As such, it is far from functionally complete and never will be. It provides the minimum function necessary
 type Provider struct {
 	resourceManager    *manager.ResourceManager
 	podLogRoot         string
@@ -607,7 +608,7 @@ func readLogFile(filename string, opts api.ContainerLogOpts) (io.ReadCloser, err
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	//defer file.Close()
 
 	// TODO: This is not an efficient algorithm for tailing very large logs files
 	scanner := bufio.NewScanner(file)
@@ -834,7 +835,7 @@ func (p *Provider) ConfigureNode(ctx context.Context, n *v1.Node) {
 func (p *Provider) capacity(ctx context.Context) v1.ResourceList {
 	err := p.refreshNodeState(ctx)
 	if err != nil {
-		panic(err)
+		//panic(err)
 	}
 
 	var cpuQ resource.Quantity

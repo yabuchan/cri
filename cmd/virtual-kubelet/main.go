@@ -18,8 +18,11 @@ import (
 	"context"
 	"strings"
 
+	constant "github.com/yabuchan/virtual-node-v2/pkg/const"
+
+	"github.com/yabuchan/virtual-node-v2/pkg/config"
+
 	"github.com/sirupsen/logrus"
-	"github.com/virtual-kubelet/cri"
 	cli "github.com/virtual-kubelet/node-cli"
 	logruscli "github.com/virtual-kubelet/node-cli/logrus"
 	opencensuscli "github.com/virtual-kubelet/node-cli/opencensus"
@@ -29,12 +32,13 @@ import (
 	logruslogger "github.com/virtual-kubelet/virtual-kubelet/log/logrus"
 	"github.com/virtual-kubelet/virtual-kubelet/trace"
 	"github.com/virtual-kubelet/virtual-kubelet/trace/opencensus"
+	"github.com/yabuchan/virtual-node-v2/pkg/business"
 )
 
 var (
 	buildVersion = "N/A"
 	buildTime    = "N/A"
-	k8sVersion   = "v1.15.2" // This should follow the version of k8s.io/kubernetes we are importing
+	k8sVersion   = "v1.26.2" // This should follow the version of k8s.io/kubernetes we are importing
 )
 
 func main() {
@@ -54,13 +58,14 @@ func main() {
 	}
 
 	o := opts.New()
-	o.Provider = "cri"
-	o.Version = strings.Join([]string{k8sVersion, "vk-cri", buildVersion}, "-")
+	o.Provider = "vn-gw"
+	o.NodeName = config.GetEnvStr(constant.NodeNameEnvKey, constant.NodeNameEnvDefaultValue)
+	o.Version = strings.Join([]string{k8sVersion, "vn", buildVersion}, "-")
 	node, err := cli.New(ctx,
 		cli.WithBaseOpts(o),
 		cli.WithCLIVersion(buildVersion, buildTime),
-		cli.WithProvider("cri", func(cfg provider.InitConfig) (provider.Provider, error) {
-			return cri.NewProvider(cfg.NodeName, cfg.OperatingSystem, cfg.InternalIP, cfg.ResourceManager, cfg.DaemonPort)
+		cli.WithProvider("vn-gw", func(cfg provider.InitConfig) (provider.Provider, error) {
+			return business.NewProvider(cfg.NodeName, cfg.OperatingSystem, cfg.InternalIP, cfg.ResourceManager, cfg.DaemonPort)
 		}),
 		cli.WithPersistentFlags(logConfig.FlagSet()),
 		cli.WithPersistentPreRunCallback(func() error {

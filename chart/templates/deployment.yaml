@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.nameOverride }}
+    group: {{ .Values.group }}
+  name: {{ .Values.hiotaVirtualKubeletNodeName }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.hiotaVirtualKubeletReplicaCount }}
+  selector:
+    matchLabels:
+      nodeName: {{ .Values.hiotaVirtualKubeletNodeName }}
+      app: {{ .Values.nameOverride }}
+      group: {{ .Values.group }}
+  strategy:
+    {{- toYaml .Values.strategy | nindent 8 }}
+  template:
+    metadata:
+      labels:
+        nodeName: {{ .Values.hiotaVirtualKubeletNodeName }}
+        app: {{ .Values.nameOverride }}
+        group: {{ .Values.group }}
+      annotations:
+        sidecar.istio.io/inject: {{ .Values.istio.inject | quote }}
+    spec:
+      containers:
+        - image: {{ .Values.repositoryUrl  }}:{{ .Values.serviceImageTag }}
+          name: {{ .Values.nickname }}
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          command:
+            - virtual-kubelet
+          env:
+            - name: NODE_NAME
+              value: {{ .Values.hiotaVirtualKubeletNodeName }}
+            - name: KUBELET_PORT
+              value: {{ .Values.hiotaVirtualKubeletPort | int | quote }}
+            - name: APISERVER_CERT_LOCATION
+              value: {{ .Values.hiotaVirtualKubeletApiServerCertLocation }}
+            - name: APISERVER_KEY_LOCATION
+              value: {{ .Values.hiotaVirtualKubeletApiServerKeyLocation }}
+            - name: VKUBELET_POD_IP
+              {{- toYaml .Values.hiotaVirtualKubeletVKubeletPodIP | nindent 18 }}
+            - name: VKUBELET_TAINT_KEY
+              value: {{ .Values.hiotaVirtualKubeletVKubeletTaintKey }}
+            - name: VKUBELET_TAINT_VALUE
+              value: {{ .Values.hiotaVirtualKubeletVKubeletTaintValue }}
+            - name: VKUBELET_TAINT_EFFECT
+              value: {{ .Values.hiotaVirtualKubeletVKubeletTaintEffect }}
+            - name: VOLUME_HOST_PATH
+              value: {{ .Values.hiotaVirtualKubeletVolumeHostPath | quote }}
+            - name: GATEWAY_IP
+              value: {{ .Values.hiotaVirtualKubeletGatewayIP | quote }}
+          resources:
+            {{- toYaml .Values.hiotaVirtualKubeletResources | nindent 16 }}
+          terminationMessagePath: {{ .Values.terminationMessagePath }}
+          terminationMessagePolicy: {{ .Values.terminationMessagePolicy }}
+          volumeMounts:
+            {{- toYaml .Values.volumeMounts | nindent 16 }}
+      dnsPolicy: {{ .Values.dnsPolicy }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 12 }}
+      restartPolicy: {{ .Values.restartPolicy }}
+      securityContext: {}
+      serviceAccount: {{ .Values.nameOverride }}
+      serviceAccountName: {{ .Values.nameOverride }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds | int }}
+      volumes:
+        {{- toYaml .Values.volumes | nindent 12 }}

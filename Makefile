@@ -3,8 +3,13 @@ LINTER_BIN ?= golangci-lint
 GO111MODULE := on
 export GO111MODULE
 
+BUILD_VERSION    ?= $(shell git describe --tags --always --dirty="-dev")
+BUILD_DATE       ?= $(shell date -u '+%Y-%m-%d-%H:%M UTC')
+VERSION_FLAGS    := -ldflags='-X "main.buildVersion=$(BUILD_VERSION)" -X "main.buildTime=$(BUILD_DATE)"'
+
 .PHONY: build
-build: bin/virtual-kubelet
+build:
+	CGO_ENABLED=0 go build -ldflags '-extldflags "-static"' -o bin/$(*) $(VERSION_FLAGS) ./cmd/virtual-kubelet/$(*)
 
 .PHONY: clean
 clean: files := bin/virtual-kubelet
@@ -31,6 +36,10 @@ check-mod: # verifies that module changes for go.mod and go.sum are checked in
 .PHONY: mod
 mod:
 	@go mod tidy
+
+.PHONY: docker
+docker:
+	docker build . -f build/Dockerfile -t 996335758134.dkr.ecr.ap-northeast-1.amazonaws.com/yabusaki/k8s-k3s/virtual-node-v2
 
 bin/virtual-kubelet: BUILD_VERSION          ?= $(shell git describe --tags --always --dirty="-dev")
 bin/virtual-kubelet: BUILD_DATE             ?= $(shell date -u '+%Y-%m-%d-%H:%M UTC')

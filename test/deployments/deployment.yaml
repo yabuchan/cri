@@ -1,0 +1,79 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: "virtual-node"
+    group: "gateway-system"
+  name: "gateway-1"
+  namespace: "gateway-system"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      nodeName: "gateway-1"
+      app: "virtual-node"
+      group: "gateway-system"
+#  strategy:
+#    {{- toYaml .Values.strategy | nindent 8 }}
+  template:
+    metadata:
+      labels:
+        nodeName: "gateway-1"
+        app: "virtual-node"
+        group: "gateway-system"
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+        - image: 996335758134.dkr.ecr.ap-northeast-1.amazonaws.com/yabusaki/k8s-k3s/virtual-node-v2
+          name: "virtual-node"
+          imagePullPolicy: "Always"
+          command:
+            - virtual-kubelet
+          env:
+            - name: KUBELET_PORT
+              value: "10250"
+            - name: APISERVER_CERT_LOCATION
+              value: "/etc/virtual-kubelet/server-cert.pem"
+            - name: APISERVER_KEY_LOCATION
+              value: "/etc/virtual-kubelet/server-key.pem"
+            - name: VKUBELET_POD_IP
+              value: "localhost"
+#              valueFrom:
+#                fieldRef:
+#                  fieldPath: status.podIP
+#            - name: VKUBELET_TAINT_KEY
+#              value: {{ .Values.hiotaVirtualKubeletVKubeletTaintKey }}
+#            - name: VKUBELET_TAINT_VALUE
+#              value: {{ .Values.hiotaVirtualKubeletVKubeletTaintValue }}
+#            - name: VKUBELET_TAINT_EFFECT
+#              value: {{ .Values.hiotaVirtualKubeletVKubeletTaintEffect }}
+#            - name: VOLUME_HOST_PATH
+#              value: {{ .Values.hiotaVirtualKubeletVolumeHostPath | quote }}
+#            - name: GATEWAY_IP
+#              value: {{ .Values.hiotaVirtualKubeletGatewayIP | quote }}
+#          resources:
+#            {{- toYaml .Values.hiotaVirtualKubeletResources | nindent 16 }}
+#          terminationMessagePath: "/dev/termination-log"
+#          terminationMessagePolicy: "File"
+          volumeMounts:
+          - mountPath: "/etc/virtual-kubelet"
+            name: "credentials"
+#      nodeSelector:
+#        beta.kubernetes.io/os: linux
+      restartPolicy: "Always"
+      securityContext: {}
+      serviceAccount: "virtual-node"
+      serviceAccountName: "virtual-node"
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: credentials
+        secret:
+          defaultMode: 420
+          secretName: "virtual-node"
+          items:
+            - key: key.pem
+              path: server-key.pem
+            - key: cert.pem
+              path: server-cert.pem

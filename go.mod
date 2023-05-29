@@ -1,9 +1,10 @@
-module github.com/virtual-kubelet/cri
+module github.com/yabuchan/virtual-node-v2
 
 go 1.12
 
 require (
 	contrib.go.opencensus.io/exporter/ocagent v0.5.0
+	github.com/aws/aws-sdk-go v1.16.26
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
 	github.com/pkg/errors v0.8.1

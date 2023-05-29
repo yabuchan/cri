@@ -1,0 +1,100 @@
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# The default number of replicas to have
+hiotaVirtualKubeletReplicaCount: 1
+
+# Default image information
+repositoryUrl: 996335758134.dkr.ecr.ap-northeast-1.amazonaws.com/yabusaki/virtual-kubelet
+serviceImageTag: latest
+pullPolicy: IfNotPresent
+
+nameOverride: virtual-node
+nickname: vk-gateway
+namespace: gateway-system
+group: kubelet
+hiotaVirtualKubeletNodeName: NODE_NAME
+
+hiotaGatewaySystemNamespace: gateway-system
+
+terminationMessagePath: /dev/termination-log
+terminationMessagePolicy: File
+terminationGracePeriodSeconds: 30
+
+# Strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 0
+
+# Resource requests and limits
+hiotaVirtualKubeletResources:
+  limits:
+    cpu: 2
+    memory: 2Gi
+  requests:
+    cpu: 5m
+    memory: 10Mi
+
+# Volume information
+volumes:
+  - name: credentials
+    secret:
+      defaultMode: 420
+      secretName: hiota-virtual-kubelet-secrets
+      items:
+        - key: ca.crt
+          path: server-ca.pem
+        - key: tls.key
+          path: server-key.pem
+        - key: tls.crt
+          path: server-cert.pem
+  - name: yedis-profile
+    configMap:
+      defaultMode: 420
+      name: yedis-profile
+
+# Default restart policy
+restartPolicy: Always
+
+# Default DNS Policy
+dnsPolicy: ClusterFirst
+
+# Node Selector
+nodeSelector:
+  beta.kubernetes.io/os: linux
+
+# Pod env variables
+hiotaAuth: {}
+
+hiotaVirtualKubeletPort: 443
+hiotaVirtualKubeletApiServerCertLocation: /etc/virtual-kubelet/server-cert.pem
+hiotaVirtualKubeletApiServerKeyLocation: /etc/virtual-kubelet/server-key.pem
+hiotaVirtualKubeletVKubeletPodIP:
+  valueFrom:
+    fieldRef:
+      fieldPath: status.podIP
+hiotaVirtualKubeletVKubeletTaintKey: virtual-kubelet.io/provider
+hiotaVirtualKubeletVKubeletTaintValue: hiotagw
+hiotaVirtualKubeletVKubeletTaintEffect: NoSchedule
+hiotaVirtualKubeletVolumeHostPath: /var/lib/lumada-edge
+
+# Volume mounts
+volumeMounts:
+  - mountPath: /etc/virtual-kubelet
+    name: credentials
+
+# Secret Configuration
+secretManager: ca-manager-service
+
+# Istio
+istio:
+  inject: "false"
+
+# Cluster
+clusterName: cluster.local
+
+global:
+  hiotaAuth: {}
+  certificate: {}
